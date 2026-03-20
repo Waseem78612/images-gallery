@@ -1,0 +1,13 @@
+{
+  "name": "image-gallery-fullstack",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start":  "node server.js",
+    "build":  "cd image-gallery && npm install && npm run build",
+    "deploy": "npm run build && npm start"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
