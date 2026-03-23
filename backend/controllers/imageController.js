@@ -1,22 +1,22 @@
-import Image             from "../models/imageModel.js";
+import Image from "../models/imageModel.js";
 import { compressImage } from "../config/compress.js";
-import { v4 as uuidv4 }  from "uuid";
-import archiver          from "archiver";
+import { v4 as uuidv4 } from "uuid";
+import archiver from "archiver";
 
 /* ── helper: build safe image response object (no binary) ── */
 const safeImage = (img) => ({
-  _id:             img._id,
-  filename:        img.filename,
-  originalName:    img.originalName,
-  originalSize:    img.originalSize,
-  compressedSize:  img.compressedSize,
+  _id: img._id,
+  filename: img.filename,
+  originalName: img.originalName,
+  originalSize: img.originalSize,
+  compressedSize: img.compressedSize,
   compressionRatio: ((1 - img.compressedSize / img.originalSize) * 100).toFixed(1) + "%",
-  width:           img.width,
-  height:          img.height,
-  title:           img.title   || "",
-  description:     img.description || "",
-  createdAt:       img.createdAt,
-  url:             `/api/images/${img._id}/view`,
+  width: img.width,
+  height: img.height,
+  title: img.title || "",
+  description: img.description || "",
+  createdAt: img.createdAt,
+  url: `/api/images/${img._id}/view`,
 });
 
 /* ─────────────────────────────────────────────────────
@@ -34,36 +34,36 @@ export const uploadImages = async (req, res) => {
         const compressed = await compressImage(file.buffer);
 
         const doc = await Image.create({
-          owner:          req.userId,
-          filename:       `${uuidv4()}.webp`,
-          originalName:   file.originalname,
-          mimeType:       "image/webp",
-          data:           compressed.buffer,
-          originalSize:   file.size,
+          owner: req.userId,
+          filename: `${uuidv4()}.webp`,
+          originalName: file.originalname,
+          mimeType: "image/webp",
+          data: compressed.buffer,
+          originalSize: file.size,
           compressedSize: compressed.size,
-          width:          compressed.width,
-          height:         compressed.height,
-          title:          req.body.title       || "",
-          description:    req.body.description || "",
+          width: compressed.width,
+          height: compressed.height,
+          title: req.body.title || "",
+          description: req.body.description || "",
         });
 
-        console.log(`✅ ${file.originalname} → ${(file.size/1024/1024).toFixed(2)}MB → ${(compressed.size/1024).toFixed(0)}KB`);
+        console.log(`✅ ${file.originalname} → ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(compressed.size / 1024).toFixed(0)}KB`);
         return safeImage(doc);
       })
     );
 
     const results = settled.filter(r => r.status === "fulfilled").map(r => r.value);
-    const errors  = settled
+    const errors = settled
       .map((r, i) => r.status === "rejected"
         ? { file: req.files[i].originalname, error: r.reason?.message }
         : null)
       .filter(Boolean);
 
     return res.status(201).json({
-      success:  results.length > 0,
+      success: results.length > 0,
       uploaded: results.length,
-      failed:   errors.length,
-      images:   results,
+      failed: errors.length,
+      images: results,
       errors,
     });
   } catch (err) {
@@ -85,8 +85,8 @@ export const getMyImages = async (req, res) => {
 
     return res.json({
       success: true,
-      count:   images.length,
-      images:  images.map(safeImage),
+      count: images.length,
+      images: images.map(safeImage),
     });
   } catch (err) {
     console.error("getMyImages error:", err.message);
@@ -110,9 +110,9 @@ export const viewImage = async (req, res) => {
     const buf = Buffer.isBuffer(img.data) ? img.data : Buffer.from(img.data);
 
     res.set({
-      "Content-Type":        "image/webp",
-      "Content-Length":      buf.length,
-      "Cache-Control":       "public, max-age=31536000, immutable",
+      "Content-Type": "image/webp",
+      "Content-Length": buf.length,
+      "Cache-Control": "public, max-age=31536000, immutable",
       "X-Content-Type-Options": "nosniff",
     });
     return res.end(buf);
@@ -168,7 +168,8 @@ export const updateImage = async (req, res) => {
 /* ─────────────────────────────────────────────────────
    GET /api/images/download-all
    Streams all user images as a ZIP file  |  Auth: required
-   ───────────────────────────────────────────────────── */
+   
+   ─────────────────────────────────────────────── */
 export const downloadAll = async (req, res) => {
   try {
     const images = await Image
@@ -182,9 +183,9 @@ export const downloadAll = async (req, res) => {
     const zipName = `image-gallery-${Date.now()}.zip`;
 
     res.set({
-      "Content-Type":        "application/zip",
+      "Content-Type": "application/zip",
       "Content-Disposition": `attachment; filename="${zipName}"`,
-      "Transfer-Encoding":   "chunked",
+      "Transfer-Encoding": "chunked",
     });
 
     const archive = archiver("zip", { zlib: { level: 6 } });
@@ -200,7 +201,7 @@ export const downloadAll = async (req, res) => {
     });
 
     for (const img of images) {
-      const buf  = Buffer.isBuffer(img.data) ? img.data : Buffer.from(img.data);
+      const buf = Buffer.isBuffer(img.data) ? img.data : Buffer.from(img.data);
       const name = img.title
         ? `${img.title.replace(/[^a-zA-Z0-9_\- ]/g, "_")}.webp`
         : img.filename || `${img._id}.webp`;
@@ -232,8 +233,8 @@ export const getAllImages = async (_req, res) => {
 
     return res.json({
       success: true,
-      count:   images.length,
-      images:  images.map((img) => ({
+      count: images.length,
+      images: images.map((img) => ({
         ...safeImage(img),
         owner: img.owner
           ? { _id: img.owner._id, username: img.owner.username, email: img.owner.email }

@@ -1,22 +1,33 @@
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user,    setUser]    = useState(null);
-  const [token,   setToken]   = useState(() => localStorage.getItem("ig_token") || null);
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(
+    () => localStorage.getItem("ig_token") || null,
+  );
   const [loading, setLoading] = useState(true);
 
-  const API = import.meta.env.VITE_API_URL || "";
-
-  /* Verify token on mount */
   useEffect(() => {
-    if (!token) { setLoading(false); return; }
-    fetch(`${API}/api/user/me`, {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    fetch(`api/user/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
-      .then((data) => { if (data.success) setUser(data.user); else logout(); })
+      .then((data) => {
+        if (data.success) setUser(data.user);
+        else logout();
+      })
       .catch(() => logout())
       .finally(() => setLoading(false));
   }, []); // eslint-disable-line
@@ -34,14 +45,19 @@ export function AuthProvider({ children }) {
   };
 
   /* Authenticated fetch — attaches Bearer token automatically */
-  const authFetch = useCallback((url, options = {}) => {
-    const headers = { ...options.headers };
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-    return fetch(`${API}${url}`, { ...options, headers });
-  }, [API, token]);
+  const authFetch = useCallback(
+    (url, options = {}) => {
+      const headers = { ...options.headers };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      return fetch(`${API}${url}`, { ...options, headers });
+    },
+    [API, token],
+  );
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, API, login, logout, authFetch }}>
+    <AuthContext.Provider
+      value={{ user, token, loading, API, login, logout, authFetch }}
+    >
       {children}
     </AuthContext.Provider>
   );

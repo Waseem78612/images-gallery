@@ -1,7 +1,7 @@
-import bcrypt   from "bcrypt";
-import jwt      from "jsonwebtoken";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import validator from "validator";
-import User     from "../models/userModel.js";
+import User from "../models/userModel.js";
 
 /* ── helper: sign JWT ── */
 const createToken = (id) =>
@@ -31,9 +31,9 @@ export const registerUser = async (req, res) => {
 
     // ── Create user
     const hashed = await bcrypt.hash(password, 12);
-    const user   = await User.create({
+    const user = await User.create({
       username: username.trim(),
-      email:    email.toLowerCase().trim(),
+      email: email.toLowerCase().trim(),
       password: hashed,
     });
 
