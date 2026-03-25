@@ -3,27 +3,26 @@ import mongoose from "mongoose";
 const userSchema = new mongoose.Schema(
   {
     username: {
-      type:     String,
+      type: String,
       required: [true, "Username is required"],
-      trim:     true,
+      trim: true,
       minlength: [2, "Username must be at least 2 characters"],
       maxlength: [30, "Username cannot exceed 30 characters"],
     },
     email: {
-      type:     String,
+      type: String,
       required: [true, "Email is required"],
-      unique:   true,
-      trim:     true,
+      unique: true,
+      trim: true,
       lowercase: true,
     },
     password: {
-      type:      String,
-      required:  [true, "Password is required"],
+      type: String,
+      required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters"],
     },
   },
-  { timestamps: true }
+  { timestamps: true } // Auto-add createdAt & updatedAt
 );
 
-const User = mongoose.model("User", userSchema);
-export default User;
+export default mongoose.model("User", userSchema);

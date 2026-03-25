@@ -1,26 +1,18 @@
-import express        from "express";
-import {
-  registerUser,
-  loginUser,
-  getMe,
-  getAllUsers,
-  getUserById,
-} from "../controllers/userController.js";
+import express from "express";
+import { registerUser, loginUser, getMe, getAllUsers, getUserById } from "../controllers/userController.js";
 import authMiddleware from "../middleware/auth.js";
 
 const userRouter = express.Router();
 
-/* ── RULE: specific named routes ALWAYS before /:id wildcard ── */
+// Public routes (no auth)
+userRouter.post("/register", registerUser); // Register new user
+userRouter.post("/login", loginUser); // Login user
 
-/* Public */
-userRouter.post("/register", registerUser);               // POST /api/user/register
-userRouter.post("/login",    loginUser);                  // POST /api/user/login
+// Protected routes (require auth)
+userRouter.get("/me", authMiddleware, getMe); // Get current user profile
+userRouter.get("/all", getAllUsers); // Get all users (admin/dev)
 
-/* Named GET routes — must be before /:id */
-userRouter.get("/me",  authMiddleware, getMe);            // GET  /api/user/me   (auth)
-userRouter.get("/all", getAllUsers);                       // GET  /api/user/all  (dev)
-
-/* Wildcard — comes LAST */
-userRouter.get("/:id", getUserById);                      // GET  /api/user/:id
+// Wildcard route - must come last
+userRouter.get("/:id", getUserById); // Get user by ID
 
 export default userRouter;
