@@ -98,7 +98,7 @@ const DeleteConfirm = ({ onConfirm, onCancel, deleting }) => (
 );
 
 // Individual image card component
-const ImageCard = ({ img, API, onDelete, onEdit, onOpen }) => {
+const ImageCard = ({ img, onDelete, onEdit, onOpen }) => {
   const [deleting, setDeleting] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [imgErr, setImgErr] = useState(false);
@@ -109,7 +109,7 @@ const ImageCard = ({ img, API, onDelete, onEdit, onOpen }) => {
       ? (img.compressedSize / 1024).toFixed(0) + " KB"
       : (img.compressedSize / 1048576).toFixed(2) + " MB";
   const [serverReady, setServerReady] = useState(false);
-  const serverUrl = !isUploading ? `${API}/api/images/${img._id}/view` : null;
+  const serverUrl = !isUploading ? `/api/images/${img._id}/view` : null;
 
   // Preload image to avoid flicker
   useEffect(() => {
@@ -226,7 +226,7 @@ const ImageCard = ({ img, API, onDelete, onEdit, onOpen }) => {
 };
 
 // Lightbox modal for fullscreen viewing
-const Lightbox = ({ img, API, onClose, onPrev, onNext, hasPrev, hasNext }) => {
+const Lightbox = ({ img, onClose, onPrev, onNext, hasPrev, hasNext }) => {
   useEffect(() => {
     const handleKey = (e) => {
       if (e.key === "Escape") onClose();
@@ -273,7 +273,7 @@ const Lightbox = ({ img, API, onClose, onPrev, onNext, hasPrev, hasNext }) => {
           </button>
         )}
         <img
-          src={`${API}/api/images/${img._id}/view`}
+          src={`/api/images/${img._id}/view`}
           alt={img.title || img.originalName}
           className="max-w-full max-h-[70vh] sm:max-h-[78vh] object-contain rounded-xl"
         />
@@ -308,7 +308,7 @@ const Lightbox = ({ img, API, onClose, onPrev, onNext, hasPrev, hasNext }) => {
 };
 
 // Edit modal for updating image metadata
-const EditModal = ({ img, onSave, onClose, token, API }) => {
+const EditModal = ({ img, onSave, onClose, token }) => {
   const [title, setTitle] = useState(img.title || "");
   const [desc, setDesc] = useState(img.description || "");
   const [saving, setSaving] = useState(false);
@@ -324,7 +324,7 @@ const EditModal = ({ img, onSave, onClose, token, API }) => {
     setSaving(true);
     try {
       const { data } = await axios.patch(
-        `${API}/api/images/${img._id}`,
+        `/api/images/${img._id}`,
         { title, description: desc },
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -397,7 +397,7 @@ const EditModal = ({ img, onSave, onClose, token, API }) => {
 
 // Main Gallery Page Component
 export default function GalleryPage() {
-  const { API, token, authFetch, user } = useAuth();
+  const { token, user } = useAuth(); // Removed API from here
   const [images, setImages] = useState([]);
   const [fetching, setFetching] = useState(true);
   const [downloading, setDownloading] = useState(false);
@@ -411,7 +411,7 @@ export default function GalleryPage() {
   const fetchImages = useCallback(async () => {
     setFetching(true);
     try {
-      const { data } = await axios.get(`${API}/api/images`, {
+      const { data } = await axios.get("/api/images", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (data.success) setImages(data.images || []);
@@ -421,7 +421,7 @@ export default function GalleryPage() {
     } finally {
       setFetching(false);
     }
-  }, [API, token]);
+  }, [token]);
 
   useEffect(() => {
     fetchImages();
@@ -448,7 +448,7 @@ export default function GalleryPage() {
     try {
       const fd = new FormData();
       files.forEach((f) => fd.append("images", f));
-      const { data } = await axios.post(`${API}/api/images/upload`, fd, {
+      const { data } = await axios.post("/api/images/upload", fd, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
@@ -494,7 +494,7 @@ export default function GalleryPage() {
     if (lightbox !== null)
       setLightbox((prev) => (prev >= images.length ? null : prev));
     try {
-      await axios.delete(`${API}/api/images/${id}`, {
+      await axios.delete(`/api/images/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
     } catch {
@@ -515,7 +515,7 @@ export default function GalleryPage() {
     setDownloading(true);
     setError("");
     try {
-      const res = await axios.get(`${API}/api/images/download-all`, {
+      const res = await axios.get("/api/images/download-all", {
         headers: { Authorization: `Bearer ${token}` },
         responseType: "blob",
       });
@@ -705,7 +705,6 @@ export default function GalleryPage() {
               <ImageCard
                 key={img._id}
                 img={img}
-                API={API}
                 onDelete={handleDelete}
                 onEdit={setEditing}
                 onOpen={openLightbox}
@@ -750,7 +749,6 @@ export default function GalleryPage() {
       {lightbox !== null && filtered[lightbox] && (
         <Lightbox
           img={filtered[lightbox]}
-          API={API}
           onClose={closeLightbox}
           onPrev={prevImage}
           onNext={nextImage}
@@ -762,7 +760,6 @@ export default function GalleryPage() {
         <EditModal
           img={editing}
           token={token}
-          API={API}
           onSave={handleEditSave}
           onClose={() => setEditing(null)}
         />

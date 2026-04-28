@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function RegisterPage() {
-  const { login, API } = useAuth();
+  const { login } = useAuth(); // Remove API from here
   const navigate = useNavigate();
   const [form, setForm] = useState({ username: "", email: "", password: "" });
   const [error, setError] = useState("");
@@ -17,13 +17,20 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
     setSuccess("");
-    if (!form.username.trim() || !form.email.trim() || !form.password)
+
+    if (!form.username.trim() || !form.email.trim() || !form.password) {
       return setError("All fields are required.");
-    if (form.password.length < 6)
+    }
+
+    if (form.password.length < 6) {
       return setError("Password must be at least 6 characters.");
+    }
+
     setLoading(true);
+
     try {
-      const res = await fetch(`${API}/api/user/register`, {
+      // Using relative path - Vite proxy will forward to http://localhost:3000
+      const res = await fetch("/api/user/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -32,16 +39,24 @@ export default function RegisterPage() {
           password: form.password,
         }),
       });
+
       const data = await res.json();
-      if (!data.success)
+
+      if (!data.success) {
         return setError(data.message || "Registration failed.");
+      }
+
       setSuccess(`Welcome, ${data.user.username}! Taking you to your gallery…`);
+
       setTimeout(() => {
         login(data.token, data.user);
         navigate("/gallery");
       }, 1500);
-    } catch {
-      setError("Cannot connect to server. Make sure server is running.");
+    } catch (error) {
+      console.error("Registration error:", error);
+      setError(
+        "Cannot connect to server. Make sure server is running on port 3000.",
+      );
     } finally {
       setLoading(false);
     }

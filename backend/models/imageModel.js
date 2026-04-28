@@ -2,33 +2,19 @@ import mongoose from "mongoose";
 
 const imageSchema = new mongoose.Schema(
   {
-    owner: {
-      type:     mongoose.Schema.Types.ObjectId,
-      ref:      "User",
-      required: true,
-      index:    true,
-    },
-    filename:     { type: String, required: true },
-    originalName: { type: String, required: true },
-    mimeType:     { type: String, required: true },
-
-    /* Compressed image stored as Buffer in MongoDB */
-    data:         { type: Buffer, required: true },
-
-    /* Size stats */
-    originalSize:   { type: Number, required: true }, // bytes before compression
-    compressedSize: { type: Number, required: true }, // bytes after compression
-
-    /* Image dimensions after compression */
-    width:  { type: Number },
-    height: { type: Number },
-
-    /* Optional user-provided title/description */
-    title:       { type: String, default: "" },
-    description: { type: String, default: "" },
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true }, // User who owns the image
+    filename: { type: String, required: true }, // Unique stored filename
+    originalName: { type: String, required: true }, // Original uploaded filename
+    mimeType: { type: String, required: true }, // MIME type of original file
+    data: { type: Buffer, required: true }, // Compressed image binary data
+    originalSize: { type: Number, required: true }, // Size before compression (bytes)
+    compressedSize: { type: Number, required: true }, // Size after compression (bytes)
+    width: { type: Number }, // Image width after compression
+    height: { type: Number }, // Image height after compression
+    title: { type: String, default: "" }, // Optional user-provided title
+    description: { type: String, default: "" }, // Optional user-provided description
   },
-  { timestamps: true }
+  { timestamps: true } // Auto-add createdAt & updatedAt
 );
 
-const Image = mongoose.model("Image", imageSchema);
-export default Image;
+export default mongoose.model("Image", imageSchema);

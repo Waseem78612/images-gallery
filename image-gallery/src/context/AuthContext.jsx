@@ -28,21 +28,29 @@ export function AuthProvider({ children }) {
   // Validate token on component mount - checks if stored token is still valid
   useEffect(() => {
     // If no token exists, stop loading and exit
-    if (!token) return setLoading(false);
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
     // Fetch current user data using stored token
-    fetch(`api/user/me`, {
+    // Using relative path because Vite proxy handles it
+    fetch("/api/user/me", {
       headers: { Authorization: `Bearer ${token}` }, // Attach token in Authorization header
     })
       .then((r) => r.json()) // Parse response as JSON
       .then((data) => {
         // If token is valid (data.success = true), set user data
         // Otherwise, token is invalid - logout to clear it
-        data.success ? setUser(data.user) : logout();
+        if (data.success) {
+          setUser(data.user);
+        } else {
+          logout();
+        }
       })
       .catch(() => logout()) // On network error, also logout
       .finally(() => setLoading(false)); // Always stop loading regardless of outcome
-  }, []); // Empty dependency array = runs once on mount
+  }, [token]); // Re-run when token changes
 
   // Login function - stores token and user data
   const login = (tok, userData) => {
@@ -66,18 +74,20 @@ export function AuthProvider({ children }) {
       const headers = { ...options.headers };
 
       // If token exists, add Authorization header
-      if (token) headers.Authorization = `Bearer ${token}`;
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
 
-      // Make fetch request with combined URL (API base + endpoint)
-      return fetch(`${API}${url}`, { ...options, headers });
+      // Make fetch request with relative URL (Vite proxy will handle it)
+      return fetch(url, { ...options, headers });
     },
-    [API, token],
-  ); // Recreate only if API url or token changes
+    [token], // Only recreate if token changes
+  );
 
   // Provide auth context value to all children components
   return (
     <AuthContext.Provider
-      value={{ user, token, loading, API, login, logout, authFetch }}
+      value={{ user, token, loading, login, logout, authFetch }}
     >
       {children} {/* Render child components that can now use auth */}
     </AuthContext.Provider>
@@ -85,5 +95,4 @@ export function AuthProvider({ children }) {
 }
 
 // Custom hook to easily access auth context anywhere in the app
-// Throws error if used outside AuthProvider (but null context handled by component)
 export const useAuth = () => useContext(AuthContext);

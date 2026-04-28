@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function LoginPage() {
-  const { login, API } = useAuth();
+  const { login } = useAuth(); // Remove API from here
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -17,11 +17,16 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setSuccess("");
-    if (!form.email.trim() || !form.password)
+
+    if (!form.email.trim() || !form.password) {
       return setError("Both fields are required.");
+    }
+
     setLoading(true);
+
     try {
-      const res = await fetch(`${API}/api/user/login`, {
+      // Using relative path - Vite proxy will forward to http://localhost:3000
+      const res = await fetch("/api/user/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -29,16 +34,24 @@ export default function LoginPage() {
           password: form.password,
         }),
       });
+
       const data = await res.json();
-      if (!data.success)
+
+      if (!data.success) {
         return setError(data.message || "Invalid email or password.");
+      }
+
       setSuccess(`Welcome back, ${data.user.username}! Opening gallery…`);
+
       setTimeout(() => {
         login(data.token, data.user);
         navigate("/gallery");
       }, 1500);
-    } catch {
-      setError("Cannot connect to server. Make sure server is running.");
+    } catch (error) {
+      console.error("Login error:", error);
+      setError(
+        "Cannot connect to server. Make sure server is running on port 3000.",
+      );
     } finally {
       setLoading(false);
     }
